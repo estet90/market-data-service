@@ -1,5 +1,6 @@
 package ru.aivik.marketdata.service.controller;
 
+import io.grpc.Context;
 import io.grpc.stub.StreamObserver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,6 +11,7 @@ import ru.aivik.marketdata.service.service.client.ExchangeClient;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -31,26 +33,32 @@ public class GrpcController extends MarketDataServiceGrpc.MarketDataServiceImplB
     }
 
     @Override
-    public void getHistoryBarsAndSubscribeTrades(MarketData.GetTradesRequest request, StreamObserver<MarketData.GetTradesResponse> responseObserver) {
+    public void getHistoryBarsAndSubscribeTrades(MarketData.GetTradesRequest request,
+                                                 StreamObserver<MarketData.GetTradesResponse> responseObserver) {
         try {
             MDC.put("requestId", UUID.randomUUID().toString());
             MDC.put("exchange", String.valueOf(request.getExchange()));
-            logger.info("GrpcController.getHistoryBarsAndSubscribeTrades.in\n\trequest=[{}]", request.toString());
+            var point = "GrpcController.getHistoryBarsAndSubscribeTrades";
+            logger.info("{}.in\n\trequest=[{}]", point, request.toString());
             var instruments = request.getInstrumentList().asByteStringList();
             var trades = new LinkedBlockingQueue<MarketData.Trade>();
             var client = exchangeClientMap.get(request.getExchange());
-            client.subscribeToAggTradeEvent(instruments, trades);
-            while (true) {
-                if (!trades.isEmpty()) {
-                    var trade = trades.poll();
-                    var response = MarketData.GetTradesResponse.newBuilder()
-                            .setTrade(trade)
-                            .build();
-                    responseObserver.onNext(response);
-                    logger.info("GrpcController.getHistoryBarsAndSubscribeTrades.out response=[{}]", response.toString());
+            try (var ignored = client.subscribeToAggTradeEvent(instruments, trades)) {
+                while (!Context.current().isCancelled()) {
+                    if (!trades.isEmpty()) {
+                        var trade = trades.poll();
+                        var response = MarketData.GetTradesResponse.newBuilder()
+                                .setTrade(trade)
+                                .build();
+                        responseObserver.onNext(response);
+                        logger.info("{}.out response=[{}]", point, response.toString());
+                    }
                 }
+            } catch (IOException e) {
+                logger.error("{}.thrown", point, e);
             }
         } finally {
+            responseObserver.onCompleted();
             MDC.clear();
         }
     }

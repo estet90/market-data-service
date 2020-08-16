@@ -4,13 +4,13 @@ import com.google.gson.Gson;
 import com.google.protobuf.ByteString;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
-import org.jetbrains.annotations.NotNull;
 import ru.aivik.marketdata.MarketData;
 import ru.aivik.marketdata.service.dto.binance.AggTradeEvent;
 import ru.aivik.marketdata.service.util.PropertyResolver;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.io.Closeable;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -35,16 +35,16 @@ public class BinanceClient implements ExchangeClient {
         gson = new Gson();
     }
 
-    public void subscribeToAggTradeEvent(List<ByteString> instruments,
-                                         BlockingQueue<MarketData.Trade> trades) {
+    public Closeable subscribeToAggTradeEvent(List<ByteString> instruments, BlockingQueue<MarketData.Trade> trades) {
         var url = resolveAggToEventUrl(instruments);
         var request = new Request.Builder()
                 .url(url)
                 .build();
-        binanceOkHttpClient.newWebSocket(request, new BinanceWebSocketListener(gson, trades, tradeBuilder));
+        var listener = new BinanceWebSocketListener(gson, trades, tradeBuilder);
+        var websocket = binanceOkHttpClient.newWebSocket(request, listener);
+        return getCloseable(listener, websocket);
     }
 
-    @NotNull
     private String resolveAggToEventUrl(List<ByteString> instruments) {
         var aggToEventUrl = new StringBuilder(this.url).append("/");
         instruments.forEach(instrument -> aggToEventUrl.append(instrument.toStringUtf8())
