@@ -1,0 +1,56 @@
+syntax = "proto3";
+
+package ru.aivik.marketdata;
+
+message XBaseBars {
+  repeated XBaseBar bars = 1;
+}
+
+message XBaseBar {
+  int64 endTime = 1;
+  float openPrice = 2;
+  float maxPrice = 3;
+  float minPrice = 4;
+  float closePrice = 5;
+  float volume = 6;
+  float volumeBase = 7;
+  float volumeQuote = 8;
+  int32 tradesCount = 9;
+}
+
+message Trade {
+  string instrument = 1;
+  int64 time = 2;
+  bool buy = 3;
+  float price = 4;
+  float volume = 5;
+}
+
+message GetTradesRequest {
+  int32 exchange = 1;
+  repeated string instrument = 2;
+  enum BarInterval {
+    INVALID = 0;
+    ONE_SECOND = 1;
+    ONE_MINUTE = 2;
+    FIVE_MINUTES = 3;
+    FIFTEEN_MINUTES = 4;
+    THIRTY_MINUTES = 5;
+    ONE_HOUR = 6;
+    TWO_HOURS = 7;
+    ONE_DAY = 8;
+  }
+  BarInterval barInterval = 3;
+  int64 from = 4;
+}
+
+message GetTradesResponse {
+  oneof responseData {
+    Trade trade = 1;
+    XBaseBars bars = 2;
+  }
+}
+
+service MarketDataService {
+  rpc GetHistoryBarsAndSubscribeTrades(GetTradesRequest) returns (stream GetTradesResponse);
+}
