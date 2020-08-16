@@ -8,15 +8,12 @@ import ru.aivik.marketdata.MarketData;
 import ru.aivik.marketdata.service.dto.binance.AggTradeEvent;
 import ru.aivik.marketdata.service.util.PropertyResolver;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.io.Closeable;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
-@Singleton
 public class BinanceClient implements ExchangeClient {
 
     private final OkHttpClient binanceOkHttpClient;
@@ -24,7 +21,6 @@ public class BinanceClient implements ExchangeClient {
     private final Gson gson;
     private final Function<AggTradeEvent, MarketData.Trade> tradeBuilder;
 
-    @Inject
     public BinanceClient(PropertyResolver propertyResolver, Function<AggTradeEvent, MarketData.Trade> tradeBuilder) {
         this.binanceOkHttpClient = new OkHttpClient.Builder()
                 .connectTimeout(propertyResolver.getIntProperty("socket.binance.connect-timeout.seconds"), TimeUnit.SECONDS)

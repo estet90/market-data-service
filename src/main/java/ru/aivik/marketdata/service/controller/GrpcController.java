@@ -9,27 +9,19 @@ import ru.aivik.marketdata.MarketData;
 import ru.aivik.marketdata.MarketDataServiceGrpc;
 import ru.aivik.marketdata.service.service.client.ExchangeClient;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.io.IOException;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
-@Singleton
 public class GrpcController extends MarketDataServiceGrpc.MarketDataServiceImplBase {
 
     private static final Logger logger = LoggerFactory.getLogger(GrpcController.class);
 
     private final Map<Integer, ExchangeClient> exchangeClientMap;
 
-    @Inject
-    public GrpcController(Set<ExchangeClient> exchangeClients) {
-        this.exchangeClientMap = exchangeClients.stream()
-                .collect(Collectors.toMap(ExchangeClient::getExchange, Function.identity()));
+    public GrpcController(Map<Integer, ExchangeClient> exchangeClientMap) {
+        this.exchangeClientMap = exchangeClientMap;
     }
 
     @Override

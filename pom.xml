@@ -79,13 +79,6 @@
             <version>1.7.30</version>
         </dependency>
 
-        <!--dagger-->
-        <dependency>
-            <groupId>com.google.dagger</groupId>
-            <artifactId>dagger</artifactId>
-            <version>${dagger.version}</version>
-        </dependency>
-
         <!--other-->
         <dependency>
             <groupId>com.google.code.gson</groupId>
@@ -112,13 +105,6 @@
                     <release>${java.version}</release>
                     <compilerArgs>--enable-preview</compilerArgs>
                     <forceJavacCompilerUse>true</forceJavacCompilerUse>
-                    <annotationProcessorPaths>
-                        <path>
-                            <groupId>com.google.dagger</groupId>
-                            <artifactId>dagger-compiler</artifactId>
-                            <version>${dagger.version}</version>
-                        </path>
-                    </annotationProcessorPaths>
                 </configuration>
             </plugin>
             <plugin>
