@@ -16,9 +16,10 @@ public interface ExchangeClient {
     default Closeable getCloseable(WebSocketListener listener, WebSocket websocket) {
         return () -> {
             var code = 1000;
-            listener.onClosing(websocket, code, "canceled");
-            websocket.close(code, "canceled");
-            listener.onClosed(websocket, code, "canceled");
+            var reason = "canceled";
+            listener.onClosing(websocket, code, reason);
+            websocket.close(code, reason);
+            listener.onClosed(websocket, code, reason);
         };
     }
 

@@ -6,6 +6,7 @@ import ru.aivik.marketdata.service.service.client.BinanceClient;
 import ru.aivik.marketdata.service.service.client.ExchangeClient;
 import ru.aivik.marketdata.service.util.PropertyResolver;
 
+import java.util.Map;
 import java.util.function.Function;
 
 public class ExchangeClientModule {
@@ -16,7 +17,12 @@ public class ExchangeClientModule {
         this.propertyResolver = propertyResolver;
     }
 
-    public ExchangeClient binanceClient() {
+    public Map<Integer, ExchangeClient> resolveExchangeClientMap() {
+        var binanceClient = binanceClient();
+        return Map.of(binanceClient.getExchange(), binanceClient);
+    }
+
+    private ExchangeClient binanceClient() {
         Function<AggTradeEvent, MarketData.Trade> tradeBuilder = event -> MarketData.Trade.newBuilder()
                 .setInstrument(event.symbol())
                 .setTime(event.tradeTime())

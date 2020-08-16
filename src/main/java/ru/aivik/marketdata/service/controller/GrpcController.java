@@ -31,7 +31,7 @@ public class GrpcController extends MarketDataServiceGrpc.MarketDataServiceImplB
             MDC.put("requestId", UUID.randomUUID().toString());
             MDC.put("exchange", String.valueOf(request.getExchange()));
             var point = "GrpcController.getHistoryBarsAndSubscribeTrades";
-            logger.info("{}.in\n\trequest=[{}]", point, request.toString());
+            logger.info("{}.in\nrequest=[{}]", point, request.toString());
             var instruments = request.getInstrumentList().asByteStringList();
             var trades = new LinkedBlockingQueue<MarketData.Trade>();
             var client = exchangeClientMap.get(request.getExchange());
@@ -43,7 +43,7 @@ public class GrpcController extends MarketDataServiceGrpc.MarketDataServiceImplB
                                 .setTrade(trade)
                                 .build();
                         responseObserver.onNext(response);
-                        logger.info("{}.out response=[{}]", point, response.toString());
+                        logger.info("{}.out\nresponse=[{}]", point, response.toString());
                     }
                 }
             } catch (IOException e) {

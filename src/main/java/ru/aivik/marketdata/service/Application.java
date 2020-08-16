@@ -6,23 +6,18 @@ import ru.aivik.marketdata.service.controller.GrpcController;
 import ru.aivik.marketdata.service.module.ExchangeClientModule;
 import ru.aivik.marketdata.service.module.GrpcModule;
 import ru.aivik.marketdata.service.module.PropertyModule;
-import ru.aivik.marketdata.service.service.client.ExchangeClient;
-import ru.aivik.marketdata.service.util.PropertyResolver;
 
 import java.io.IOException;
-import java.util.Map;
 
 public class Application {
 
     private static final Logger logger = LoggerFactory.getLogger(Application.class);
 
     public static void main(String[] args) throws IOException, InterruptedException {
-        var propertyModule = new PropertyModule();
-        var propertyResolver = propertyModule.propertyResolver();
-        var exchangeClientMap = resolveExchangeClientMap(propertyResolver);
+        var propertyResolver = new PropertyModule().propertyResolver();
+        var exchangeClientMap = new ExchangeClientModule(propertyResolver).resolveExchangeClientMap();
         var controller = new GrpcController(exchangeClientMap);
-        var grpcModule = new GrpcModule(propertyResolver);
-        var server = grpcModule.grpcServer(controller);
+        var server = new GrpcModule(propertyResolver).grpcServer(controller);
         server.start();
         logger.info("started");
         server.awaitTermination();
@@ -30,12 +25,6 @@ public class Application {
             logger.info("stop");
             server.shutdown();
         }));
-    }
-
-    private static Map<Integer, ExchangeClient> resolveExchangeClientMap(PropertyResolver propertyResolver) {
-        var exchangeClientModule = new ExchangeClientModule(propertyResolver);
-        var binanceClient = exchangeClientModule.binanceClient();
-        return Map.of(binanceClient.getExchange(), binanceClient);
     }
 
 }
