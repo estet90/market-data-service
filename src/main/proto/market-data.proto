@@ -27,7 +27,10 @@ message Trade {
 }
 
 message GetTradesRequest {
-  int32 exchange = 1;
+  enum Exchange {
+    BINANCE = 0;
+  }
+  Exchange exchange = 1;
   repeated string instrument = 2;
   enum BarInterval {
     INVALID = 0;

@@ -17,7 +17,7 @@ public class ExchangeClientModule {
         this.propertyResolver = propertyResolver;
     }
 
-    public Map<Integer, ExchangeClient> resolveExchangeClientMap() {
+    public Map<MarketData.GetTradesRequest.Exchange, ExchangeClient> resolveExchangeClientMap() {
         var binanceClient = binanceClient();
         return Map.of(binanceClient.getExchange(), binanceClient);
     }

@@ -15,8 +15,9 @@ import ru.aivik.marketdata.service.dto.binance.AggTradeEvent;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.SubmissionPublisher;
 import java.util.function.Function;
 
 import static java.util.Optional.ofNullable;
@@ -24,16 +25,16 @@ import static java.util.Optional.ofNullable;
 public class BinanceWebSocketListener extends WebSocketListener {
 
     private final Gson gson;
-    private final BlockingQueue<MarketData.Trade> trades;
+    private final Map<String, SubmissionPublisher<MarketData.Trade>> newPublishers;
     private final Function<AggTradeEvent, MarketData.Trade> tradeBuilder;
 
     private static final Logger logger = LoggerFactory.getLogger(BinanceWebSocketListener.class);
 
     public BinanceWebSocketListener(Gson gson,
-                                    BlockingQueue<MarketData.Trade> trades,
+                                    Map<String, SubmissionPublisher<MarketData.Trade>> newPublishers,
                                     Function<AggTradeEvent, MarketData.Trade> tradeBuilder) {
         this.gson = gson;
-        this.trades = trades;
+        this.newPublishers = newPublishers;
         this.tradeBuilder = tradeBuilder;
     }
 
@@ -62,7 +63,8 @@ public class BinanceWebSocketListener extends WebSocketListener {
     public void onMessage(@NotNull WebSocket webSocket, @NotNull String text) {
         var event = gson.fromJson(text, AggTradeEvent.class);
         var trade = tradeBuilder.apply(event);
-        trades.add(trade);
+        var publisher = newPublishers.get(trade.getInstrument());
+        publisher.submit(trade);
         logger.trace("BinanceWebSocketListener.onMessage.string\n\tresponse={}", text);
     }
 
@@ -71,7 +73,8 @@ public class BinanceWebSocketListener extends WebSocketListener {
         var text = bytes.hex();
         var event = gson.fromJson(text, AggTradeEvent.class);
         var trade = tradeBuilder.apply(event);
-        trades.add(trade);
+        var publisher = newPublishers.get(trade.getInstrument());
+        publisher.submit(trade);
         logger.trace("BinanceWebSocketListener.onMessage.bytes\n\tresponse={}", text);
     }
 

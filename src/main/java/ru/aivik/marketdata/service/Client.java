@@ -19,7 +19,7 @@ public class Client {
                 .usePlaintext()
                 .build();
         var request = MarketData.GetTradesRequest.newBuilder()
-                .setExchange(1)
+                .setExchange(MarketData.GetTradesRequest.Exchange.BINANCE)
                 .addInstrument("btcusdt")
                 .build();
 

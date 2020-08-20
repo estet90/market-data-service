@@ -6,6 +6,7 @@ import ru.aivik.marketdata.service.controller.GrpcController;
 import ru.aivik.marketdata.service.module.ExchangeClientModule;
 import ru.aivik.marketdata.service.module.GrpcModule;
 import ru.aivik.marketdata.service.module.PropertyModule;
+import ru.aivik.marketdata.service.service.aggregator.TradeDataAggregator;
 
 import java.io.IOException;
 
@@ -16,7 +17,8 @@ public class Application {
     public static void main(String[] args) throws IOException, InterruptedException {
         var propertyResolver = new PropertyModule().propertyResolver();
         var exchangeClientMap = new ExchangeClientModule(propertyResolver).resolveExchangeClientMap();
-        var controller = new GrpcController(exchangeClientMap);
+        var tradeDataAggregator = new TradeDataAggregator(exchangeClientMap);
+        var controller = new GrpcController(tradeDataAggregator);
         var server = new GrpcModule(propertyResolver).grpcServer(controller);
         server.start();
         logger.info("started");
