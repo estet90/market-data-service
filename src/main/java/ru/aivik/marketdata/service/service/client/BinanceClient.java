@@ -33,8 +33,8 @@ public class BinanceClient implements ExchangeClient {
     }
 
     @Override
-    public Closeable subscribeToAggTradeEvent(Map<String, SubmissionPublisher<MarketData.Trade>> newPublishers) {
-        var url = resolveAggToEventUrl(newPublishers.keySet());
+    public Closeable subscribeToAggTradeEvent(Map<String, SubmissionPublisher<MarketData.Trade>> newPublishers, Set<String> instruments) {
+        var url = resolveAggToEventUrl(instruments);
         var request = new Request.Builder()
                 .url(url)
                 .build();

@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import ru.aivik.marketdata.MarketData;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Flow;
 
@@ -17,6 +18,15 @@ public class TradeSubscriber implements Flow.Subscriber<MarketData.Trade> {
 
     private Flow.Subscription subscription;
 
+    /**
+     * Подписка на информацию об инструменте
+     *
+     * @param exchange - биржа
+     * @param instrument - инструмент
+     * @param subscriberId - уникальный идентификатор, рекомендуется использовать {@link java.util.UUID},
+     *                     т.к. это единственное поле, которое проверяется в методах equals, hashcode
+     * @param trades - очередь, в которую будут складывваться данные
+     */
     public TradeSubscriber(MarketData.GetTradesRequest.Exchange exchange,
                            String instrument,
                            String subscriberId,
@@ -64,5 +74,22 @@ public class TradeSubscriber implements Flow.Subscriber<MarketData.Trade> {
 
     public String getSubscriberId() {
         return subscriberId;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        var that = (TradeSubscriber) o;
+        return Objects.equals(subscriberId, that.subscriberId);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(subscriberId);
     }
 }

@@ -63,7 +63,7 @@ public class BinanceWebSocketListener extends WebSocketListener {
     public void onMessage(@NotNull WebSocket webSocket, @NotNull String text) {
         var event = gson.fromJson(text, AggTradeEvent.class);
         var trade = tradeBuilder.apply(event);
-        var publisher = newPublishers.get(trade.getInstrument());
+        var publisher = newPublishers.get(trade.getInstrument().toUpperCase());
         publisher.submit(trade);
         logger.trace("BinanceWebSocketListener.onMessage.string\n\tresponse={}", text);
     }
@@ -73,7 +73,7 @@ public class BinanceWebSocketListener extends WebSocketListener {
         var text = bytes.hex();
         var event = gson.fromJson(text, AggTradeEvent.class);
         var trade = tradeBuilder.apply(event);
-        var publisher = newPublishers.get(trade.getInstrument());
+        var publisher = newPublishers.get(trade.getInstrument().toUpperCase());
         publisher.submit(trade);
         logger.trace("BinanceWebSocketListener.onMessage.bytes\n\tresponse={}", text);
     }
