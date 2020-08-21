@@ -10,24 +10,27 @@ import org.slf4j.MDC;
 import ru.aivik.marketdata.MarketData;
 import ru.aivik.marketdata.MarketDataServiceGrpc;
 import ru.aivik.marketdata.service.dto.TradeSubscriber;
+import ru.aivik.marketdata.service.error.exception.ApplicationException;
 import ru.aivik.marketdata.service.service.aggregator.TradeDataAggregator;
 
 import java.io.IOException;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
+
+import static java.util.Optional.ofNullable;
+import static ru.aivik.marketdata.service.error.exception.ApplicationException.Type.Execution;
 
 public class GrpcController extends MarketDataServiceGrpc.MarketDataServiceImplBase {
 
     private static final Logger logger = LoggerFactory.getLogger(GrpcController.class);
 
     private final TradeDataAggregator tradeDataAggregator;
+    private final ScheduledExecutorService executor;
 
     public GrpcController(TradeDataAggregator tradeDataAggregator) {
         this.tradeDataAggregator = tradeDataAggregator;
+        executor = Executors.newScheduledThreadPool(50);
     }
 
     @Override
@@ -35,7 +38,6 @@ public class GrpcController extends MarketDataServiceGrpc.MarketDataServiceImplB
                                                  StreamObserver<MarketData.GetTradesResponse> responseObserver) {
         var point = "GrpcController.getHistoryBarsAndSubscribeTrades";
         var trades = new LinkedBlockingQueue<MarketData.Trade>();
-        var executor = Executors.newScheduledThreadPool(1);
         var context = Context.current();
         var future = executor.scheduleWithFixedDelay(() -> {
             if (!context.isCancelled()) {
@@ -47,6 +49,8 @@ public class GrpcController extends MarketDataServiceGrpc.MarketDataServiceImplB
                     responseObserver.onNext(response);
                     logger.debug("{}.out\nresponse=[{}]", point, response.toString());
                 }
+            } else {
+                throw new ApplicationException("Обработка завершена", Execution);
             }
         }, 0, 10, TimeUnit.MILLISECONDS);
         try {
@@ -60,8 +64,18 @@ public class GrpcController extends MarketDataServiceGrpc.MarketDataServiceImplB
                     .collect(Collectors.toSet());
             try (var ignored = tradeDataAggregator.aggregate(subscribers, exchange)) {
                 future.get();
-            } catch (IOException | InterruptedException | ExecutionException e) {
+            } catch (IOException e) {
+                future.cancel(true);
                 logger.error("{}.thrown", point, e);
+            } catch (InterruptedException | ExecutionException e) {
+                future.cancel(true);
+                ofNullable(e.getCause())
+                        .filter(throwable -> throwable instanceof ApplicationException applicationException
+                                && Execution.equals(applicationException.getType()))
+                        .ifPresentOrElse(
+                                throwable -> logger.info("{}.out", point),
+                                () -> logger.error("{}.thrown", point, e)
+                        );
             }
         } finally {
             responseObserver.onCompleted();

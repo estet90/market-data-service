@@ -25,7 +25,6 @@ public class BinanceClient implements ExchangeClient {
         this.binanceOkHttpClient = new OkHttpClient.Builder()
                 .connectTimeout(propertyResolver.getIntProperty("socket.binance.connect-timeout.seconds"), TimeUnit.SECONDS)
                 .readTimeout(propertyResolver.getIntProperty("socket.binance.read-timeout.seconds"), TimeUnit.SECONDS)
-                .pingInterval(1, TimeUnit.SECONDS)
                 .build();
         this.url = propertyResolver.getStringProperty("socket.binance.url");
         this.tradeBuilder = tradeBuilder;
